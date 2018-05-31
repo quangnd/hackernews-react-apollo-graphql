@@ -1,4 +1,4 @@
-import React, {Component} from 'react'
+import React, { Component } from 'react'
 import { graphql } from 'react-apollo'
 import gql from 'graphql-tag'
 
@@ -10,7 +10,7 @@ class CreateLink extends Component {
 
   render() {
     return (
-       <div>
+      <div>
         <div className="flex flex-column mt3">
           <input
             className="mb2"
@@ -34,25 +34,26 @@ class CreateLink extends Component {
 
   _createLink = async () => {
     const { description, url } = this.state
-    console.log(description, url)
+ 
     await this.props.postMutation({
       variables: {
         description,
         url
       }
     })
+    this.props.history.push('/')
   }
 }
 
 const POST_MUTATION = gql`
-      mutation PostMutation($description: String!, $url: String!) {
-        post(description: $description, url: $url) {
-          id
-          createdAt
-          url
-          description
-        }
-      }
-    `
+  mutation PostMutation($description: String!, $url: String!) {
+    post(description: $description, url: $url) {
+      id
+      createdAt
+      url
+      description
+    }
+  }
+`
 
-export default graphql(POST_MUTATION, {name: 'postMutation'})(CreateLink)
+export default graphql(POST_MUTATION, { name: 'postMutation' })(CreateLink)
