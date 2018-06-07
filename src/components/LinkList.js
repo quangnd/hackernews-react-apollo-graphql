@@ -8,22 +8,27 @@ class LinkList extends Component {
     if (this.props.feedQuery && this.props.feedQuery.loading) {
       return <div>Loading</div>
     }
-  
+
     // 2
     if (this.props.feedQuery && this.props.feedQuery.error) {
       return <div>Error</div>
     }
-  
+
     // 3
     const linksToRender = this.props.feedQuery.feed.links
 
     return (
       <div>
         {linksToRender.map((link, index) => (
-          <Link key={link.id} updateStoreAfterVote={this._updateCacheAfterVote} index={index} link={link}/>
+          <Link key={link.id} updateStoreAfterVote={this._updateCacheAfterVote} index={index} link={link} />
         ))}
       </div>
     )
+  }
+
+  componentDidMount() {
+    // this._subscribeToNewLinks()
+    // this._subscribeToNewVotes()
   }
 
   _updateCacheAfterVote = (store, createVote, linkId) => {
@@ -36,6 +41,76 @@ class LinkList extends Component {
 
     // 3
     store.writeQuery({ query: FEED_QUERY, data })
+  }
+
+  _subscribeToNewLinks = () => {
+    this.props.feedQuery.subscribeToMore({
+      document: gql`
+        subscription {
+          newLink {
+            node {
+              id
+              url
+              description
+              createdAt
+              postedBy {
+                id
+                name
+              }
+              votes {
+                id
+                user {
+                  id
+                }
+              }
+            }
+          }
+        }
+      `,
+      updateQuery: (previous, { subscriptionData }) => {
+        const newAllLinks = [subscriptionData.data.newLink.node, ...previous.feed.links]
+        const result = {
+          ...previous,
+          feed: {
+            links: newAllLinks
+          },
+        }
+        return result
+      }
+    })
+  }
+
+  _subscribeToNewVotes = () => {
+    this.props.feedQuery.subscribeToMore({
+      document: gql`
+        subscription {
+          newVote {
+            node {
+              id
+              link {
+                id
+                url
+                description
+                createdAt
+                postedBy {
+                  id
+                  name
+                }
+                votes {
+                  id
+                  user {
+                    id
+                  }
+                }
+              }
+              user {
+                id
+              }
+            }
+          }
+        }
+      `,
+    })
   }
 }
 
@@ -66,4 +141,4 @@ export const FEED_QUERY = gql`
 
 
 // 3
-export default graphql(FEED_QUERY, { name: 'feedQuery' }) (LinkList)
+export default graphql(FEED_QUERY, { name: 'feedQuery' })(LinkList)
